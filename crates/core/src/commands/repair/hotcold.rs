@@ -10,6 +10,17 @@ use crate::{
     RusticResult, WriteBackend, ALL_FILE_TYPES,
 };
 
+/// Repairs a hot/cold repository by copying missing files (except pack files) over from one to the other part.
+///
+/// # Type Parameters
+///
+/// * `P` - The progress bar type.
+/// * `S` - The state the repository is in.
+///
+/// # Arguments
+///
+/// * `repo` - The repository
+/// * `dry_run` - Do a dry run
 pub(crate) fn repair_hotcold<P: ProgressBars, S>(
     repo: &Repository<P, S>,
     dry_run: bool,
@@ -22,6 +33,17 @@ pub(crate) fn repair_hotcold<P: ProgressBars, S>(
     Ok(())
 }
 
+/// Repairs a hot/cold repository by copying missing tree pack files over from one to the other part.
+///
+/// # Type Parameters
+///
+/// * `P` - The progress bar type.
+/// * `S` - The state the repository is in.
+///
+/// # Arguments
+///
+/// * `repo` - The repository
+/// * `dry_run` - Do a dry run
 pub(crate) fn repair_hotcold_packs<P: ProgressBars, S: Open>(
     repo: &Repository<P, S>,
     dry_run: bool,
@@ -35,6 +57,19 @@ pub(crate) fn repair_hotcold_packs<P: ProgressBars, S: Open>(
     )
 }
 
+/// Copy relevant+misssing files in a hot/cold repository from one to the other part.
+///
+/// # Type Parameters
+///
+/// * `P` - The progress bar type.
+/// * `S` - The state the repository is in.
+///
+/// # Arguments
+///
+/// * `repo` - The repository
+/// * `file_type` - The filetype to copy
+/// * `is_relevalt` - A closure to determine whether the id is relevat
+/// * `dry_run` - Do a dry run
 pub(crate) fn correct_missing_files<P: ProgressBars, S>(
     repo: &Repository<P, S>,
     file_type: FileType,
@@ -91,6 +126,14 @@ pub(crate) fn correct_missing_files<P: ProgressBars, S>(
     Ok(())
 }
 
+/// Copy a list of files from one repo to another.
+///
+/// # Arguments
+///
+/// * `files` - The list of file ids to copy
+/// * `file_type` - The filetype to copy
+/// * `from` - The backend to read from
+/// * `to` - The backend to write to
 fn copy(
     files: Vec<Id>,
     file_type: FileType,
@@ -104,6 +147,20 @@ fn copy(
     Ok(())
 }
 
+/// Get all tree packs from from within the repository.
+///
+/// # Type Parameters
+///
+/// * `P` - The progress bar type.
+/// * `S` - The state the repository is in.
+///
+/// # Arguments
+///
+/// * `repo` - The repository
+///
+/// # Returns
+///
+/// The set of pack ids.
 pub(crate) fn get_tree_packs<P: ProgressBars, S: Open>(
     repo: &Repository<P, S>,
 ) -> RusticResult<BTreeSet<PackId>> {
@@ -121,6 +178,22 @@ pub(crate) fn get_tree_packs<P: ProgressBars, S: Open>(
     Ok(tree_packs)
 }
 
+/// Find missing files in the hot or cold part of the repository.
+///
+/// # Type Parameters
+///
+/// * `P` - The progress bar type.
+/// * `S` - The state the repository is in.
+///
+/// # Arguments
+///
+/// * `repo` - The repository
+/// * `file_type` - The filetype to use
+/// * `is_relevalt` - A closure to determine whether the id is relevat
+///
+/// # Returns
+///
+/// A tuple containing ids missing in hot part, the total size, ids missing in cold part and the corresponding total size.
 pub(crate) fn get_missing_files<P: ProgressBars, S>(
     repo: &Repository<P, S>,
     file_type: FileType,

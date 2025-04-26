@@ -708,18 +708,18 @@ impl<P, S> Repository<P, S> {
     /// * If the config file has `is_hot` set to `false` but the repository is hot
     fn open_raw(mut self, key: Key, config: ConfigFile) -> RusticResult<Repository<P, OpenStatus>> {
         match (config.is_hot == Some(true), self.be_hot.is_some()) {
-            (true, false) => return Err(
-                RusticError::new(
+            (true, false) => {
+                return Err(RusticError::new(
                     ErrorKind::Repository,
                     "The given repository is a hot repository! Please use `--repo-hot` in combination with the normal repo. Aborting.",
-                )
-            ),
-            (false, true) => return Err(
-                RusticError::new(
+                ));
+            }
+            (false, true) => {
+                return Err(RusticError::new(
                     ErrorKind::Repository,
                     "The given repository is not a hot repository! Aborting.",
-                )
-            ),
+                ));
+            }
             _ => {}
         }
 
@@ -944,24 +944,10 @@ impl<P, S: Open> Repository<P, S> {
         self.status.dbe()
     }
 
-    /// Save a [`ConfigFile`] only to the hot part of a repository
-    ///
-    /// # Type Parameters
-    ///
-    /// * `P` - The progress bar type.
-    /// * `S` - The state the repository is in.
-    ///
-    /// # Arguments
-    ///
-    /// * `repo` - The repository to save the config to
-    /// * `new_config` - The config to save
-    /// * `key` - The key to encrypt the config with
-    ///
+    /// Init only the hot repository, i.e. Save the  [`ConfigFile`] only to the hot part of a repository
     /// # Errors
     ///
-    /// * [`CryptBackendErrorKind::SerializingToJsonByteVectorFailed`] - If the file could not be serialized to json.
-    ///
-    /// [`CryptBackendErrorKind::SerializingToJsonByteVectorFailed`]: crate::error::CryptBackendErrorKind::SerializingToJsonByteVectorFailed
+    /// * If the config file could not be saved.
     pub fn init_hot(&self) -> RusticResult<()> {
         if let Some(hot_be) = self.be_hot.clone() {
             hot_be.create()?;
@@ -1203,12 +1189,10 @@ impl<P: ProgressBars, S: Open> Repository<P, S> {
     /// * If the files could not be deleted.
     pub fn delete_snapshots(&self, ids: &[SnapshotId]) -> RusticResult<()> {
         if self.config().append_only == Some(true) {
-            return Err(
-                RusticError::new(
-                    ErrorKind::Repository,
-                    "Repository is in append-only mode and snapshots cannot be deleted from it. Aborting.",
-                )
-            );
+            return Err(RusticError::new(
+                ErrorKind::Repository,
+                "Repository is in append-only mode and snapshots cannot be deleted from it. Aborting.",
+            ));
         }
         let p = self.pb.progress_counter("removing snapshots...");
         self.dbe().delete_list(true, ids.iter(), p)?;
